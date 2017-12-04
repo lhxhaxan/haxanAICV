@@ -1,4 +1,4 @@
-#!c:\users\nerv\pycharmprojects\aicv\venv\scripts\python.exe
+#!g:\ps\ai\haxanaicv\venv\scripts\python.exe
 # See http://cens.ioc.ee/projects/f2py2e/
 from __future__ import division, print_function
 

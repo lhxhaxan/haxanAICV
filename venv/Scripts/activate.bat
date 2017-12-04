@@ -1,5 +1,5 @@
 @echo off
-set "VIRTUAL_ENV=C:\Users\NERV\PycharmProjects\AICV\venv"
+set "VIRTUAL_ENV=G:\ps\AI\haxanAICV\venv"
 
 if defined _OLD_VIRTUAL_PROMPT (
     set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
