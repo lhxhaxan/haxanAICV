@@ -11,26 +11,48 @@
 
 import cv2
 
-def autoGWWB(cvImg):#灰度世界自动白平衡
+def autoGWWB(cvImg):  #灰度世界自动白平衡
     krgb = rgbplus(autogary(cvImg))
     print("pp",krgb)
     img = cv2.split(cvImg)
+    #print(img)
+    """for i in range(0,2):
+        img[i] = img[i] * krgb[i]
+    """
+    """
+    for i in range(0,2):
+        #if i == 0 :print("i", img[i])
+        for j in range(0, len(img[i])):
+            #if  i == 0  and j == 0: print("j", img[i][j])
+            for k in range (0 ,len(img[i][j])):
+                #if i==0 and j == 0 and k == 0: print("k", img[i][j][k])
+                img[i][j][k] = img[i][j][k] * krgb[i]
+                if img[i][j][k] > 255:  img[i][j][k]=255
+    """
+    """
+            for k in range (0, len(img[i][0][j])):
+                img[i][0][j][k] = img[i][0][j][k] * krgb[i]
+               # if img[i][0][j][k] > 255:  img[i][0][j][k] = 255
+    
     for i in range(0, len(img)-1):
         for j in range(0, len(img[i])):
             img[i][j] = img[i][j] * krgb[i]
+            #if img[i][j] > 255:  img[i][j]=255
+            #print(i, ":", j, img[i][j])
+    """
     cvImg = cv2.merge(img)
     return cvImg
     pass
 
 def autogary(cvImg):  # 通过图片计算50%灰度
     krgb = cv2.mean(cvImg)  # 求原始图像的RGB分量的均值 输出krgb[B,G,R,A]
-    print("s", krgb)
+    #print("s", krgb)
     return krgb
     pass
 
 def rgbplus(krgb):  # 通过灰度计算每个通道需要增益的比值
     plus = (krgb[0] + krgb[1] + krgb[2]) / 3
-    print('p', plus)
+    #print('p', plus)
     return [
         plus / krgb[0],
         plus / krgb[1],
