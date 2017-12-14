@@ -39,13 +39,22 @@ def rgbplus(krgb):  # 通过灰度计算每个通道需要增益的比值
     pass
 
 
-def perfectReflector(cvImg, ratio=10):
+def perfectReflector(cvImg, ratio=10 ,maxB=-1):
     img =cv2.split(cvImg)
     wpx = (img[0] + img[1] + img[2]).flatten() #计算像素亮度（升序） flatten，把二维数组转一维数组
     brightest = np.argsort(wpx) # 以亮度排序像素，返回下标（升序）
     #print(brightest[brightest.size * (100 - ratio) //100])
-    RB = np.hsplit(brightest, (0, brightest.size * (100 - ratio) // 100))[2] # 前10%或其他Ratio的白色参考点组成数组，由于升序所以要100-Ratio
-    maxB = wpx[brightest[brightest.size-1]]
+    tap = brightest.size * (100 - ratio) // 100
+    for i in range (0,tap)[::-1]: #  包含同一亮度值的像素
+        if wpx[brightest[i]] < wpx[brightest[tap]]:
+            break
+        else:
+            tap = i
+    RB = np.hsplit(brightest, (0, tap))[2] # 前10%或其他Ratio的白色参考点组成数组，由于升序所以要100-Ratio
+
+    if maxB == -1: # 设定最亮值为图片最亮值
+        maxB = wpx[brightest[brightest.size - 1]]
+
     sumB = 0
     sumG = 0
     sumR = 0
@@ -83,13 +92,13 @@ class imgWB():
         pass
 
 
-img = cv2.imread("../sample/timg.jpg")
+img = cv2.imread("../sample/timg2.jpg")
 cv2.imshow("timg", img)
 wb =  autoGWWB(img)
 cv2.imshow("wb", wb)
 print(img,"=============================================================")
 print(wb)
-wb2 = perfectReflector(img, 1)
+wb2 = perfectReflector(img, 1, 220)
 cv2.imshow("wb2", wb2)
 print(img,"=============================================================")
 print(wb2)
