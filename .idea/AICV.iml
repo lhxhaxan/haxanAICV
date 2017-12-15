@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv1" />
       <excludeFolder url="file://$MODULE_DIR$/venvpad" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.6 (haxanAICV) (1)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.6 (haxanAICV)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="R User Library" level="project" />
     <orderEntry type="library" name="R Skeletons" level="application" />
