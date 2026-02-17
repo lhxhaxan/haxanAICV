@@ -1,0 +1,381 @@
+# BallLightning 完整系统架构图（含OpenClaw深度集成）
+
+```mermaid
+graph TB
+    %% =========== 用户界面层 ===========
+    subgraph "用户界面层 (User Interface Layer)"
+        direction TB
+        UI["BallLightning Web UI<br/>项目管理界面"]
+        PM["项目管理器<br/>Project Manager"]
+        GV["图形可视化器<br/>Graph Visualizer"]
+        SM["会话管理器<br/>Session Manager"]
+        EVS["错误可视化系统<br/>Error Visualization System"]
+        TSD["拓扑图状态显示<br/>Topology State Display"]
+        
+        %% UI内部连接
+        UI --> PM
+        UI --> GV
+        UI --> SM
+        UI --> EVS
+        EVS --> TSD
+    end
+    
+    %% =========== BallLightning后端层 ===========
+    subgraph "BallLightning后端层 (Backend Layer)"
+        direction TB
+        APIGW["API网关/路由器<br/>API Gateway/Router"]
+        
+        %% 核心服务
+        PS["项目存储服务<br/>Project Store Service"]
+        SessM["会话管理服务<br/>Session Management Service"]
+        TS["拓扑存储服务<br/>Topology Store Service"]
+        
+        %% 长时间运行Agent管理系统
+        subgraph "长时间运行Agent管理系统<br/>Long-running Agent Management System"
+            direction TB
+            Init["项目初始化引擎<br/>Project Initializer"]
+            Incr["增量工作流引擎<br/>Incremental Workflow Engine"]
+            ST["状态跟踪管理器<br/>State Tracker"]
+            FL["功能列表管理器<br/>Feature List Manager"]
+            TF["测试集成框架<br/>Test Framework"]
+            GS["Git状态集成器<br/>Git State Integrator"]
+        end
+        
+        %% 增强组件
+        subgraph "增强组件<br/>Enhanced Components"
+            direction TB
+            PC["参数配置服务<br/>Parameter Configuration Service"]
+            QM["队列管理器<br/>Queue Manager<br/>(资源/AI模型排队)"]
+            EM["错误监控器<br/>Error Monitor"]
+            MR["主代理路由服务<br/>Main Agent Routing Service"]
+        end
+    end
+    
+    %% =========== OpenClaw Gateway集成层 ===========
+    subgraph "OpenClaw Gateway集成层<br/>(深度集成点)"
+        direction TB
+        OC_GW["OpenClaw Gateway<br/>核心网关"]
+        
+        %% OpenClaw核心能力
+        subgraph "OpenClaw核心能力<br/>Core Capabilities"
+            direction TB
+            AM["代理管理器<br/>Agent Manager<br/>(sessions_spawn, agents_list)"]
+            SR["Skill注册与管理<br/>Skill Registry & Manager"]
+            MC["模型并发控制器<br/>Model Concurrency Controller"]
+            MemSys["记忆系统<br/>Memory System<br/>(memory_get/search)"]
+            CronSys["定时任务系统<br/>Cron System"]
+            ToolSys["工具系统<br/>Tool System<br/>(exec, process, browser, canvas)"]
+        end
+        
+        %% OpenClaw提供者
+        subgraph "OpenClaw提供者<br/>Providers"
+            direction LR
+            LP["LLM提供者<br/>LLM Providers"]
+            AP["代理池<br/>Agent Pool"]
+            TP["工具提供者<br/>Tool Providers"]
+        end
+    end
+    
+    %% =========== 外部渠道适配层 ===========
+    subgraph "外部渠道适配层<br/>External Channel Adapters"
+        direction LR
+        LA["飞书适配器<br/>Lark Adapter"]
+        TA["Telegram适配器<br/>Telegram Adapter"]
+        DA["Discord适配器<br/>Discord Adapter"]
+        WA["Webhook适配器<br/>Webhook Adapter"]
+        SA["Signal适配器<br/>Signal Adapter"]
+        WA2["WhatsApp适配器<br/>WhatsApp Adapter"]
+    end
+    
+    %% =========== 数据存储层 ===========
+    subgraph "数据存储层<br/>Data Storage Layer"
+        direction LR
+        DB["关系数据库<br/>PostgreSQL/MySQL"]
+        KV["键值存储<br/>Redis/etcd"]
+        FS["文件存储<br/>File Storage<br/>(项目文件、文档)"]
+        Git["Git仓库<br/>Git Repositories"]
+    end
+    
+    %% =========== 监控与运维层 ===========
+    subgraph "监控与运维层<br/>Monitoring & Operations"
+        direction LR
+        Prom["Prometheus<br/>指标收集"]
+        Graf["Grafana<br/>仪表板"]
+        Alert["告警管理器<br/>Alert Manager"]
+        Log["日志聚合<br/>ELK/Loki"]
+        Trace["分布式追踪<br/>Jaeger/Tempo"]
+    end
+    
+    %% =========== 主要数据流 ===========
+    
+    %% 用户界面 ↔ BallLightning后端
+    UI -->|WebSocket + REST API| APIGW
+    APIGW -->|项目管理| PS
+    APIGW -->|会话管理| SessM
+    APIGW -->|拓扑数据| TS
+    
+    %% BallLightning后端内部连接
+    SessM -->|会话创建/管理| MR
+    MR -->|代理协调| AM
+    
+    %% BallLightning ↔ 长时间运行Agent系统
+    APIGW -->|项目初始化| Init
+    APIGW -->|工作流管理| Incr
+    APIGW -->|状态跟踪| ST
+    APIGW -->|功能管理| FL
+    APIGW -->|测试集成| TF
+    APIGW -->|Git集成| GS
+    
+    %% 增强组件连接
+    APIGW -->|参数配置| PC
+    APIGW -->|队列管理| QM
+    APIGW -->|错误监控| EM
+    PC -->|配置分发| 所有组件["所有系统组件"]
+    QM -->|排队请求| MC
+    EM -->|错误收集| EVS
+    
+    %% BallLightning ↔ OpenClaw深度集成点
+    SessM -->|Gateway Client| OC_GW
+    MR -->|消息路由协调| OC_GW
+    AM -->|代理生命周期管理| OC_GW
+    SR -->|Skill注册调用| OC_GW
+    MC -->|模型并发控制| OC_GW
+    MemSys -->|状态持久化| PS & TS & SessM
+    CronSys -->|定时任务| Init & Incr & ST
+    ToolSys -->|工具调用| TF & GS
+    
+    %% OpenClaw内部连接
+    OC_GW --> AM
+    AM --> SR
+    AM --> MC
+    AM --> AP
+    OC_GW --> LP
+    OC_GW --> TP
+    MC -->|模型调用| LP
+    SR -->|Skill调用| TP
+    
+    %% OpenClaw ↔ 外部渠道
+    OC_GW --> LA
+    OC_GW --> TA
+    OC_GW --> DA
+    OC_GW --> WA
+    OC_GW --> SA
+    OC_GW --> WA2
+    
+    %% 数据存储连接
+    PS --> DB
+    TS --> DB
+    SessM --> KV
+    PC --> KV
+    Init --> FS
+    Incr --> FS
+    GS --> Git
+    
+    %% 监控连接
+    APIGW -->|指标| Prom
+    OC_GW -->|指标| Prom
+    EM -->|告警| Alert
+    Prom --> Graf
+    Alert --> Graf
+    APIGW -->|日志| Log
+    OC_GW -->|日志| Log
+    APIGW -->|追踪| Trace
+    OC_GW -->|追踪| Trace
+    
+    %% =========== 关键集成点说明 ===========
+    
+    %% 集成点1: 会话管理集成
+    subgraph "集成点1: 会话管理"
+        SessM_OC["BallLightning会话管理"] -->|利用sessions_spawn| AM_OC["OpenClaw代理管理器"]
+        AM_OC -->|创建/管理代理会话| Sessions["代理会话池"]
+    end
+    
+    %% 集成点2: 消息路由协调
+    subgraph "集成点2: 消息路由"
+        MR_OC["BallLightning主代理路由"] -->|业务逻辑路由| OC_Routing["OpenClaw消息路由"]
+        OC_Routing -->|底层消息传递| Channels["外部渠道"]
+        note1["职责划分:<br/>- BallLightning: 业务逻辑路由<br/>- OpenClaw: 底层消息传递"]
+    end
+    
+    %% 集成点3: 工具系统集成
+    subgraph "集成点3: 工具系统"
+        TF_OC["测试框架"] -->|动态注册| SR_OC["Skill注册表"]
+        SR_OC -->|权限管理| ToolPerms["工具权限控制"]
+        SR_OC -->|调用审计| ToolAudit["工具调用审计"]
+    end
+    
+    %% 集成点4: 状态管理集成
+    subgraph "集成点4: 状态管理"
+        PS_OC["项目状态"] -->|持久化到| MemSys_OC["OpenClaw记忆系统"]
+        TS_OC["拓扑状态"] -->|持久化到| MemSys_OC
+        SessM_OC2["会话状态"] -->|持久化到| MemSys_OC
+    end
+    
+    %% 集成点5: 资源控制集成
+    subgraph "集成点5: 资源控制"
+        QM_OC["队列管理器"] -->|资源阈值监控| MC_OC["模型并发控制器"]
+        MC_OC -->|公平调度| LP_OC["LLM提供者"]
+        MC_OC -->|排队机制| Queue["优先级队列"]
+    end
+    
+    %% =========== 样式定义 ===========
+    classDef ui fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef backend fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef gateway fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef adapters fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef storage fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef monitoring fill:#fff8e1,stroke:#ff6f00,stroke-width:2px
+    classDef integration fill:#e0f2f1,stroke:#004d40,stroke-width:2px
+    
+    class UI,PM,GV,SM,EVS,TSD ui
+    class APIGW,PS,SessM,TS,Init,Incr,ST,FL,TF,GS,PC,QM,EM,MR backend
+    class OC_GW,AM,SR,MC,MemSys,CronSys,ToolSys,LP,AP,TP gateway
+    class LA,TA,DA,WA,SA,WA2 adapters
+    class DB,KV,FS,Git storage
+    class Prom,Graf,Alert,Log,Trace monitoring
+    class SessM_OC,AM_OC,Sessions,MR_OC,OC_Routing,Channels,TF_OC,SR_OC,ToolPerms,ToolAudit,PS_OC,MemSys_OC,TS_OC,SessM_OC2,QM_OC,MC_OC,LP_OC,Queue integration
+```
+
+## 架构图说明
+
+### 1. 系统层级划分
+1. **用户界面层**：BallLightning Web UI，提供项目管理、可视化、监控等功能
+2. **BallLightning后端层**：核心业务逻辑，包括项目管理、会话管理、长时间运行Agent系统
+3. **OpenClaw Gateway集成层**：深度集成OpenClaw核心能力，避免重复造轮子
+4. **外部渠道适配层**：支持多种消息渠道（飞书、Telegram、Discord等）
+5. **数据存储层**：持久化存储项目数据、状态、文件
+6. **监控与运维层**：完整的可观测性体系
+
+### 2. OpenClaw深度集成点
+
+#### 集成点1: 会话管理集成
+- **BallLightning职责**：业务逻辑的会话管理（项目会话、工作流会话）
+- **OpenClaw职责**：底层代理会话的创建和管理（sessions_spawn）
+- **集成方式**：BallLightning会话管理服务通过Gateway Client调用OpenClaw的代理管理器
+
+#### 集成点2: 消息路由协调
+- **BallLightning职责**：业务逻辑路由（主代理路由、子代理协调）
+- **OpenClaw职责**：底层消息传递（渠道适配、消息转发）
+- **集成方式**：明确职责划分，避免功能重复
+
+#### 集成点3: 工具系统集成
+- **BallLightning职责**：定义业务工具（测试框架、Git集成等）
+- **OpenClaw职责**：工具注册、权限管理、调用审计
+- **集成方式**：通过Skill注册机制动态注册自定义工具
+
+#### 集成点4: 状态管理集成
+- **BallLightning职责**：业务状态定义（项目状态、拓扑状态、会话状态）
+- **OpenClaw职责**：状态持久化（memory_get/search系统）
+- **集成方式**：将业务状态持久化到OpenClaw记忆系统
+
+#### 集成点5: 资源控制集成
+- **BallLightning职责**：业务资源排队（项目队列、任务队列）
+- **OpenClaw职责**：模型并发控制、资源阈值监控
+- **集成方式**：利用OpenClaw的模型并发控制器和排队机制
+
+### 3. 长时间运行Agent管理系统
+基于Anthropic文章最佳实践的两阶段架构：
+1. **项目初始化阶段**：创建项目环境、生成功能列表
+2. **增量工作流阶段**：一次处理一个功能，避免上下文耗尽
+3. **状态跟踪**：结合进度文件和Git历史的完整状态管理
+4. **测试集成**：自动化测试验证功能完成度
+5. **Git集成**：自动提交、历史查询、回滚支持
+
+### 4. 关键设计决策
+
+#### 4.1 避免功能重复
+- **不重复开发**：消息路由、代理管理、工具系统等直接使用OpenClaw能力
+- **专注业务逻辑**：BallLightning专注于项目管理、蜂群协作、长时间运行Agent等业务逻辑
+
+#### 4.2 充分利用OpenClaw能力
+- **sessions_spawn**：用于创建和管理代理会话
+- **agents_list**：用于代理注册和发现
+- **memory系统**：用于状态持久化
+- **cron系统**：用于定时任务和心跳检查
+- **工具系统**：用于自定义工具注册和调用
+
+#### 4.3 清晰的职责划分
+- **BallLightning**：项目管理、蜂群协作、工作流协调、业务逻辑路由
+- **OpenClaw**：代理管理、消息传递、工具系统、状态持久化、资源控制
+
+### 5. 数据流说明
+
+#### 5.1 用户请求流程
+1. 用户通过Web UI或外部渠道发送请求
+2. BallLightning API网关接收请求
+3. 根据请求类型路由到相应服务
+4. 需要代理处理的请求通过主代理路由服务协调
+5. 主代理路由调用OpenClaw代理管理器创建/管理代理
+6. 代理处理结果返回给用户
+
+#### 5.2 状态同步流程
+1. 各组件状态变化时，更新到OpenClaw记忆系统
+2. 监控系统收集指标和日志
+3. 错误监控器收集错误信息
+4. 可视化系统实时显示状态和错误
+
+#### 5.3 工具调用流程
+1. BallLightning定义业务工具
+2. 通过Skill注册机制注册到OpenClaw
+3. 代理通过OpenClaw工具系统调用工具
+4. 工具调用记录审计日志
+
+### 6. 扩展性设计
+
+#### 6.1 水平扩展
+- **无状态服务**：API网关、会话管理服务可水平扩展
+- **有状态服务**：使用分布式存储（Redis/etcd）管理状态
+
+#### 6.2 插件化架构
+- **渠道适配器**：可动态添加新的渠道适配器
+- **工具插件**：通过Skill机制动态注册新工具
+- **存储后端**：支持多种数据库和存储系统
+
+#### 6.3 监控告警
+- **指标收集**：Prometheus收集所有组件指标
+- **日志聚合**：ELK/Loki集中管理日志
+- **分布式追踪**：Jaeger/Tempo追踪请求链路
+- **告警管理**：基于指标的智能告警
+
+### 7. 部署架构
+
+#### 7.1 单机部署（开发环境）
+- 所有组件部署在同一台机器
+- 使用Docker Compose管理服务
+- 适合开发和测试
+
+#### 7.2 分布式部署（生产环境）
+- 前端、后端、OpenClaw Gateway分离部署
+- 使用Kubernetes管理容器
+- 数据库、缓存、存储使用云服务
+- 负载均衡和自动扩缩容
+
+### 8. 安全考虑
+
+#### 8.1 认证授权
+- **OAuth 2.0**：用户认证
+- **JWT令牌**：API访问控制
+- **角色权限**：基于角色的访问控制
+
+#### 8.2 数据安全
+- **传输加密**：HTTPS/TLS加密通信
+- **存储加密**：数据库加密存储
+- **访问审计**：所有操作记录审计日志
+
+#### 8.3 工具安全
+- **权限控制**：工具调用权限管理
+- **沙箱执行**：危险操作在沙箱中执行
+- **调用审计**：所有工具调用记录审计
+
+---
+
+## 总结
+
+本架构图展示了BallLightning作为OpenClaw插件的完整系统设计，重点突出了与OpenClaw的深度集成关系。通过充分利用OpenClaw现有能力，避免了重复开发，同时专注于BallLightning的核心业务价值：**蜂群协作的项目管理工具**。
+
+**核心优势**：
+1. **架构简洁**：避免功能重复，职责清晰
+2. **扩展性强**：插件化设计，易于扩展
+3. **运维友好**：完整的监控告警体系
+4. **安全可靠**：多层次安全防护
+5. **开发高效**：充分利用OpenClaw生态，快速迭代
